@@ -1,8 +1,8 @@
 #!/usr/bin/env perl
 
 use Test::More tests => 10;
-use MarpaX::Simple::Lexer::Test;
-my $test = 'MarpaX::Simple::Lexer::Test';
+use MarpaX::Repa::Test;
+my $test = 'MarpaX::Repa::Test';
 
 # simple success cases matching whole input
 for my $case (
@@ -10,7 +10,7 @@ for my $case (
     { tokens => { word => qr/XX/ }, input => "XX" },
 ) {
     my ($lexer, $rec) = $test->recognize( %$case );
-    is_deeply( $rec->value, \$case->{'input'} );
+    is_deeply( $rec->value, \{ rule => 'text', value => $case->{'input'} } );
     is ${$lexer->buffer}, '';
 }
 
@@ -19,7 +19,7 @@ for my $case (
     my ($lexer, $rec) = $test->recognize(
         tokens => { word => qr/X/ }, input => "XY",
     );
-    is_deeply( $rec->value, \"X" );
+    is_deeply( $rec->value, \{ rule => 'text', value => "X" } );
     is ${$lexer->buffer}, 'Y';
 }
 

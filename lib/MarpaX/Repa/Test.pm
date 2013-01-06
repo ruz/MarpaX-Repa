@@ -1,30 +1,31 @@
 use 5.010; use strict; use warnings;
 
-package MarpaX::Simple::Lexer::Test;
+package MarpaX::Repa::Test;
 
-use Marpa::XS;
-use MarpaX::Simple::Lexer;
+use Marpa::R2;
+use MarpaX::Repa::Lexer;
+use MarpaX::Repa::Actions;
 
 sub simple_lexer {
     my $self = shift;
     my %args = (@_);
-    my $grammar = Marpa::XS::Grammar->new({
-        actions => 'MarpaX::Simple::Lexer::Test::Actions',
+    my $grammar = Marpa::R2::Grammar->new({
+        action_object => 'MarpaX::Repa::Actions',
         start => 'text',
         default_action => 'do_what_I_mean',
         rules => [
             [ 'text'  => [ 'word' ] ],
         ],
-        lhs_terminals => 0,
         (
             map { $_ => $args{$_} } grep exists $args{$_},
-            qw(start rules lhs_terminals default_action),
+            qw(start rules default_action),
         ),
     });
     $grammar->precompute;
-    my $recognizer = Marpa::XS::Recognizer->new( { grammar => $grammar } );
-    my $lexer = MarpaX::Simple::Lexer->new(
+    my $recognizer = Marpa::R2::Recognizer->new( { grammar => $grammar } );
+    my $lexer = MarpaX::Repa::Lexer->new(
         tokens     => { word => 'test' },
+        store      => 'scalar',
         %args,
         recognizer => $recognizer,
     );
@@ -47,14 +48,6 @@ sub recognize {
     my @res = $self->simple_lexer( %args );
     $res[0]->recognize( $io );
     return @res;
-}
-
-package MarpaX::Simple::Lexer::Test::Actions;
-
-sub do_what_I_mean {
-    shift;
-    my @children = grep defined && length, @_;
-    return scalar @children > 1 ? \@children : shift @children;
 }
 
 1;

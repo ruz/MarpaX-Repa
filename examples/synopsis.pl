@@ -3,12 +3,13 @@ use strict;
 use warnings;
 use lib 'lib/';
 
-use Marpa::XS;
-use MarpaX::Simple::Lexer;
+use Marpa::R2;
+use MarpaX::Repa::Lexer;
+use MarpaX::Repa::Actions;
 
-my $grammar = Marpa::XS::Grammar->new( {
-    actions => 'main',
-    default_action => 'do_what_I_mean',
+my $grammar = Marpa::R2::Grammar->new( {
+    action_object => 'MarpaX::Repa::Actions',
+    default_action => 'do_scalar_or_list',
     start   => 'query',
     rules   => [
         {
@@ -21,25 +22,32 @@ my $grammar = Marpa::XS::Grammar->new( {
         [ condition => [qw(NOT condition)] ],
 
         [ 'SPACE?' => [] ],
-        [ 'SPACE?' => [qw(SPACE)] ],
+        { lhs => 'SPACE?', rhs => [qw(SPACE)], action => 'do_ignore', },
     ],
-    lhs_terminals => 0,
 });
 $grammar->precompute;
-my $recognizer = Marpa::XS::Recognizer->new( { grammar => $grammar } );
+my $recognizer = Marpa::R2::Recognizer->new( { grammar => $grammar } );
 
 use Regexp::Common qw /delimited/;
 
 my $lexer = MyLexer->new(
     recognizer => $recognizer,
     tokens => {
-        word          => qr{\b\w+\b},
-        'quoted'      => qr[$RE{delimited}{-delim=>qq{\'\"}}],
-        OP            => qr{\s+(OR)\s+|\s+},
-        NOT           => '!',
-        'OPEN-PAREN'  => '(',
-        'CLOSE-PAREN' => ')',
-        'SPACE'       => qr{\s+()},
+        word          => { match => qr{\b\w+\b}, store => 'scalar' },
+        'quoted'      => {
+            match => qr[$RE{delimited}{-delim=>qq{\"}}],
+            store => sub {
+                ${$_[1]} =~ s/^"//;
+                ${$_[1]} =~ s/"$//;
+                ${$_[1]} =~ s/\\([\\"])/$1/g;
+                return $_[1];
+            },
+        },
+        OP            => { match => qr{\s+OR\s+|\s+}, store => sub { ${$_[1]} =~ /\S/? \'|' : \'&' } },
+        NOT           => { match => '!', store => sub {\'!'} },
+        'OPEN-PAREN'  => { match => '(', store => 'undef' },
+        'CLOSE-PAREN' => { match => ')', store => 'undef' },
+        'SPACE'       => { match => qr{\s+}, store => 'undef' },
     },
     debug => 1,
 );
@@ -49,14 +57,8 @@ $lexer->recognize(\*DATA);
 use Data::Dumper;
 print Dumper $recognizer->value;
 
-sub do_what_I_mean {
-    shift;
-    my @children = grep defined && length, @_;
-    return scalar @children > 1 ? \@children : shift @children;
-}
-
 package MyLexer;
-use base 'MarpaX::Simple::Lexer';
+use base 'MarpaX::Repa::Lexer';
 
 sub grow_buffer {
     my $self = shift;

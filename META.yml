@@ -1,5 +1,5 @@
 ---
-abstract: 'simplify lexing for Marpa parser'
+abstract: 'helps start with Marpa'
 author:
   - 'Ruslan Zakirov <Ruslan.Zakirov@gmail.com>'
 build_requires:
@@ -13,16 +13,16 @@ license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
-module_name: MarpaX::Simple::Lexer
-name: MarpaX-Simple-Lexer
+module_name: MarpaX::Repa
+name: MarpaX-Repa
 no_index:
   directory:
     - examples
     - inc
     - t
 requires:
-  Marpa::XS: 0
+  Marpa::R2: 0
   perl: 5.10.0
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.01
+version: 0.02

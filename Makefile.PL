@@ -1,5 +1,5 @@
 use inc::Module::Install;
-all_from 'lib/MarpaX/Simple/Lexer.pm';
-readme_from 'lib/MarpaX/Simple/Lexer.pm';
-requires 'Marpa::XS';
+all_from 'lib/MarpaX/Repa.pm';
+readme_from 'lib/MarpaX/Repa.pm';
+requires 'Marpa::R2';
 WriteAll;

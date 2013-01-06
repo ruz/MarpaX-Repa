@@ -1,18 +1,21 @@
 NAME
-    MarpaX::Simple::Lexer - simplify lexing for Marpa parser
+    MarpaX::Repa - helps start with Marpa
 
 SYNOPSIS
+    Shipped with distribution - examples/synopsis.pl:
+
         use 5.010;
         use strict;
         use warnings;
         use lib 'lib/';
 
-        use Marpa::XS;
-        use MarpaX::Simple::Lexer;
+        use Marpa::R2;
+        use MarpaX::Repa::Lexer;
+        use MarpaX::Repa::Actions;
 
-        my $grammar = Marpa::XS::Grammar->new( {
-            actions => 'main',
-            default_action => 'do_what_I_mean',
+        my $grammar = Marpa::R2::Grammar->new( {
+            action_object => 'MarpaX::Repa::Actions',
+            default_action => 'do_scalar_or_list',
             start   => 'query',
             rules   => [
                 {
@@ -25,25 +28,35 @@ SYNOPSIS
                 [ condition => [qw(NOT condition)] ],
 
                 [ 'SPACE?' => [] ],
-                [ 'SPACE?' => [qw(SPACE)] ],
+                { lhs => 'SPACE?', rhs => [qw(SPACE)], action => 'do_ignore', },
             ],
-            lhs_terminals => 0,
         });
         $grammar->precompute;
-        my $recognizer = Marpa::XS::Recognizer->new( { grammar => $grammar } );
+        my $recognizer = Marpa::R2::Recognizer->new( { grammar => $grammar } );
 
         use Regexp::Common qw /delimited/;
 
         my $lexer = MyLexer->new(
             recognizer => $recognizer,
             tokens => {
-                word          => qr{\b\w+\b},
-                'quoted'      => qr[$RE{delimited}{-delim=>qq{\'\"}}],
-                OP            => qr{\s+(OR)\s+|\s+},
-                NOT           => '!',
-                'OPEN-PAREN'  => '(',
-                'CLOSE-PAREN' => ')',
-                'SPACE'       => qr{\s+()},
+                word          => { match => qr{\b\w+\b}, store => 'scalar' },
+                'quoted'      => {
+                    match => qr[$RE{delimited}{-delim=>qq{\"}}],
+                    store => sub {
+                        ${$_[1]} =~ s/^"//;
+                        ${$_[1]} =~ s/"$//;
+                        ${$_[1]} =~ s/\\([\\"])/$1/g;
+                        return $_[1];
+                    },
+                },
+                OP            => {
+                    match => qr{\s+OR\s+|\s+},
+                    store => sub { ${$_[1]} =~ /\S/? \'|' : \'&' }
+                },
+                NOT           => { match => '!', store => sub {\'!'} },
+                'OPEN-PAREN'  => { match => '(', store => 'undef' },
+                'CLOSE-PAREN' => { match => ')', store => 'undef' },
+                'SPACE'       => { match => qr{\s+}, store => 'undef' },
             },
             debug => 1,
         );
@@ -53,14 +66,8 @@ SYNOPSIS
         use Data::Dumper;
         print Dumper $recognizer->value;
 
-        sub do_what_I_mean {
-            shift;
-            my @children = grep defined && length, @_;
-            return scalar @children > 1 ? \@children : shift @children;
-        }
-
         package MyLexer;
-        use base 'MarpaX::Simple::Lexer';
+        use base 'MarpaX::Repa::Lexer';
 
         sub grow_buffer {
             my $self = shift;
@@ -74,34 +81,33 @@ SYNOPSIS
         hello !world OR "he hehe hee" ( foo OR !boo )
 
 WARNING
-    This is experimental module in alpha stage I cooked during weekend to
-    simplify and speed up writing marpa grammar and lexer for vCards.
-
-    I'm publishing it to collect feedback and because I believe it can be
-    very useful to people experimenting with Marpa.
+    This is experimental module in beta stage. Some API still may change,
+    but it's already very close to stability.
 
 DESCRIPTION
-    This module helps you start with Marpa::XS parser and simplifies lexing.
+    This module helps you start with Marpa::R2 parser and simplifies lexing.
 
 TUTORIAL
   Where to start
-    Here is template you can start a new parser from:
+    Here is template you can start a new parser from (shipped with
+    distribution - examples/template.pl):
 
         use strict; use warnings;
 
-        use Marpa::XS;
-        use MarpaX::Simple::Lexer;
+        use Marpa::R2;
+        use MarpaX::Repa::Lexer;
+        use MarpaX::Repa::Actions;
 
-        my $grammar = Marpa::XS::Grammar->new( {
-            start   => 'query',
-            rules   => [
+        my $grammar = Marpa::R2::Grammar->new( {
+            action_object => 'MarpaX::Repa::Actions',
+            start         => 'query',
+            rules         => [
                 [ query => [qw(something)] ],
             ],
-            lhs_terminals => 0,
         });
         $grammar->precompute;
-        my $recognizer = Marpa::XS::Recognizer->new( { grammar => $grammar } );
-        my $lexer = MarpaX::Simple::Lexer->new(
+        my $recognizer = Marpa::R2::Recognizer->new( { grammar => $grammar } );
+        my $lexer = MarpaX::Repa::Lexer->new(
             recognizer => $recognizer,
             tokens => {},
             debug => 1,
@@ -117,7 +123,7 @@ TUTORIAL
         Expect token(s): 'something'
         Buffer start: hello !world "he heh...
         Unknown token: 'something'
-        Unexpected message, type "parse exhausted" at ...
+        Failed to parse: Problem in ...
 
     First line says that at this moment parser expects 'something'. It's
     going to look for it in the following text (second line). Third line
@@ -129,7 +135,7 @@ TUTORIAL
 
   Put some grammar
         rules   => [
-            # over query is a sequence of conditions separated with OPs
+            # query is a sequence of conditions separated with OPs
             {
                 lhs => 'query', rhs => [qw(condition)],
                 min => 1, separator => 'OP', proper => 1, keep => 1,
@@ -167,7 +173,7 @@ TUTORIAL
 
         use Regexp::Common qw /delimited/;
 
-        my $lexer = MarpaX::Simple::Lexer->new(
+        my $lexer = MarpaX::Repa::Lexer->new(
             recognizer => $recognizer,
             tokens => {
                 word => qr{\b\w+\b},
@@ -175,7 +181,7 @@ TUTORIAL
                 NOT => '!',
                 'OPEN-PAREN' => '(',
                 'CLOSE-PAREN' => ')',
-                'quoted' => qr[$RE{delimited}{-delim=>qq{\'\"}}],
+                'quoted' => qr[$RE{delimited}{-delim=>qq{\"}}],
             },
             debug => 1,
         );
@@ -183,7 +189,7 @@ TUTORIAL
   Tokens matching empty string
     You can not have such. In our example grammar we have 'SPACE?' that is
     optional. You could try to use "qr{\s*}", but lexer would die with an
-    error. Instead use the following:
+    error. Instead use the following rules:
 
         rules   => [
             ...
@@ -198,15 +204,16 @@ TUTORIAL
 
   Lexer's ambiguity
     This module uses marpa's alternative input model what allows you to
-    describe ambiguous lexer, e.g. several tokens starts at the same point.
-    This is not always give you multiple results, but allows to start faster
-    and keep improving tokens and grammar to avoid unnecessary ambiguity
-    cases.
+    describe an ambiguous lexer, e.g. several tokens start at the same
+    position. This does not always give you multiple parse trees, but allows
+    you to start faster and keep improving tokens and grammar to avoid
+    unnecessary ambiguity cases.
 
   Longest token match
     Let's look at string "x OR y". It should match "word OP word", but it
-    matches "word OP word OP word". This happens because of how we defined
-    OP token. If we change it to "qr{\s+OR\s+|\s+}" then results are better.
+    matches "word OP word OP word" and it's not correct. It happens because
+    of how we defined OP token - "qr{\s+|\s+OR\s+}". If we change it to
+    "qr{\s+OR\s+|\s+}" then we get correct result.
 
   Input buffer
     By default lexer reads data from the input stream in chunks into a
@@ -219,31 +226,32 @@ TUTORIAL
     Read everything into memory. Simplest way out. It's not default value to
     avoid encouragement:
 
-        my $lexer = MarpaX::Simple::Lexer->new(
+        my $lexer = MarpaX::Repa::Lexer->new(
             min_buffer => 0,
             ...
         );
 
     Use larger buffer:
 
-        my $lexer = MarpaX::Simple::Lexer->new(
+        my $lexer = MarpaX::Repa::Lexer->new(
             min_buffer => 10*1024*1024, # 10MB
             ...
         );
 
-    Use built in protection from such cases. When a regular expression token
-    matches whole buffer and buffer still can grow then lexer grows buffer
-    and retries. This allows you to write a regular expression that matches
-    till end of token or end of buffer ("$"). Note that this may result in
-    token incomplete match if input ends right in the middle of it.
+    Use built in protection from such cases. When a token based on a regular
+    expression matches whole buffer and buffer still can grow then lexer
+    grows buffer and retries. This allows you to write a regular expression
+    that matches till end of token or end of input ("$"). Note that this may
+    result in token incomplete match if input ends right in the middle of
+    it.
 
         tokens => {
             ...
             'text-paragraph' => qr{\w[\w\s]+?(?:\n\n|$)},
         },
 
-    Adjust grammar. In most cases you can split long terminal into multiple
-    terminals with limitted length. For example:
+    Adjust grammar. In most cases you can split a long terminal into
+    multiple terminals with limitted length. For example:
 
         rules   => [
             ...
@@ -254,7 +262,7 @@ TUTORIAL
     Input can be filtered with subclassing grow_buffer method:
 
         package MyLexer;
-        use base 'MarpaX::Simple::Lexer';
+        use base 'MarpaX::Repa::Lexer';
 
         sub grow_buffer {
             my $self = shift;
@@ -264,44 +272,22 @@ TUTORIAL
         }
 
   Actions
-    The simplest possible action that can produce some results:
+    Repa comes with set of actions to help you start by concentrating on
+    grammar. Start from <MarpaX::Repa::Actions/do_what_I_mean>:
 
-        my $grammar = Marpa::XS::Grammar->new( {
-            actions => 'main',
+        my $grammar = Marpa::R2::Grammar->new( {
+            action_object  => 'MarpaX::Repa::Actions',
             default_action => 'do_what_I_mean',
             ...
         );
-        sub do_what_I_mean {
-            shift;
-            my @children = grep defined && length, @_;
-            return @children > 1 ? \@children : shift @children;
-        }
-        ...
-
-        $lexer->recognize(\*DATA);
-
-        use Data::Dumper;
-        print Dumper $recognizer->value;
 
   Token's values
-    Values of tokens are set to whatever token matches in the input, however
-    for regexp tokens you can use $1 to set value. Here is part of data from
-    our example:
+    Values of tokens are set to a hash by default:
 
-        '(',
-        ' ',
-        [ ...
+        { token => 'a token name', value => 'matched value' }
 
-    Paren is followed by optional space. We can change SPACE token:
-
-            'SPACE'       => qr{\s+()},
-
-    New token captures empty string into $1 and it skipped by default
-    action.
-
-    Similar trick can be used with OP, but to cature 'OR' without spaces:
-
-            OP            => qr{\s+(OR)\s+|\s+},
+    You can change format per token or for all tokens using 'store' option,
+    see "SYNOPSIS" for examples and MarpaX::Repa::Lexer for full list.
 
   What's next
     Add more actions. Experiment. Enjoy.
