@@ -297,7 +297,8 @@ sub dump_buffer {
     my $self = shift;
     my $show = shift // 20;
     my $str = $show? substr( $self->{'buffer'}, 0, $show ) : $self->{'buffer'};
-    return $str =~ s/([^\x20-\x7E])/'\\x{'. hex( ord $1 ) .'}' /gre;
+    (my $res = $str) =~ s/([^\x20-\x7E])/'\\x{'. hex( ord $1 ) .'}' /ge;
+    return $res;
 }
 
 1;
