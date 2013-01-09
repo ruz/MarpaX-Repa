@@ -241,6 +241,12 @@ sub recognize {
 
         my $skip = 0;
         while (1) {
+            # XXX: we are done, no way to advance further, we would love this
+            # to be improved in Marpa
+            if ( $rec->current_earleme == $rec->thin->furthest_earleme ) {
+                return $rec;
+            }
+
             $skip++;
             local $@;
             if ( defined (my $events = eval { $rec->earleme_complete }) ) {

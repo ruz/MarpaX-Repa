@@ -34,7 +34,6 @@ for my $case (
 }
 
 # sequence that can not continue
-# XXX: match fails and it's sad
 {
     my ($lexer, $rec) = $test->recognize(
         rules => [
@@ -43,6 +42,6 @@ for my $case (
         tokens => { word => qr/X/ },
         input => "XXY",
     );
-    is $rec->value, undef;
+    is_deeply $rec->value, \{rule => 'text', value => ['X', 'X']};
     is ${$lexer->buffer}, 'Y';
 }
