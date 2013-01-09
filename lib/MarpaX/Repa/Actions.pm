@@ -124,6 +124,19 @@ sub do_scalar_or_list {
     return @_>1? \@_ : shift;
 }
 
+=head2 do_flat_to_list
+
+Returns (pseudo code):
+
+    [ map @$_||%$_||$_, grep defined, @_ ]
+
+=cut
+
+sub do_flat_to_list {
+    shift;
+    return [ map { ref $_ eq 'ARRAY'? @$_ : ref $_ eq 'HASH'? %$_ : $_ } grep defined, @_ ];
+}
+
 =head2 do_ignore
 
 Returns:
