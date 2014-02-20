@@ -41,12 +41,9 @@ Shipped with distribution - F<examples/synopsis.pl>:
         ],
     });
     $grammar->precompute;
-    my $recognizer = Marpa::R2::Recognizer->new( { grammar => $grammar } );
 
     use Regexp::Common qw /delimited/;
-
     my $lexer = MyLexer->new(
-        recognizer => $recognizer,
         tokens => {
             word          => { match => qr{\b\w+\b}, store => 'scalar' },
             'quoted'      => {
@@ -58,10 +55,7 @@ Shipped with distribution - F<examples/synopsis.pl>:
                     return $_[1];
                 },
             },
-            OP            => {
-                match => qr{\s+OR\s+|\s+},
-                store => sub { ${$_[1]} =~ /\S/? \'|' : \'&' }
-            },
+            OP            => { match => qr{\s+OR\s+|\s+}, store => sub { ${$_[1]} =~ /\S/? \'|' : \'&' } },
             NOT           => { match => '!', store => sub {\'!'} },
             'OPEN-PAREN'  => { match => '(', store => 'undef' },
             'CLOSE-PAREN' => { match => ')', store => 'undef' },
@@ -70,7 +64,7 @@ Shipped with distribution - F<examples/synopsis.pl>:
         debug => 1,
     );
 
-    $lexer->recognize(\*DATA);
+    my $recognizer = $lexer->recognize( Marpa::R2::Recognizer->new( { grammar => $grammar } ), \*DATA );
 
     use Data::Dumper;
     print Dumper $recognizer->value;
@@ -119,14 +113,12 @@ Here is template you can start a new parser from
         ],
     });
     $grammar->precompute;
-    my $recognizer = Marpa::R2::Recognizer->new( { grammar => $grammar } );
     my $lexer = MarpaX::Repa::Lexer->new(
-        recognizer => $recognizer,
         tokens => {},
         debug => 1,
     );
 
-    $lexer->recognize(\*DATA);
+    my $recognizer = $lexer->recognize( Marpa::R2::Recognizer->new( { grammar => $grammar } ), \*DATA);
 
     __DATA__
     hello !world "he hehe hee" ( foo OR boo )
@@ -190,7 +182,6 @@ Congrats! First token matched. More tokens:
     use Regexp::Common qw /delimited/;
 
     my $lexer = MarpaX::Repa::Lexer->new(
-        recognizer => $recognizer,
         tokens => {
             word => qr{\b\w+\b},
             OP => qr{\s+|\s+OR\s+},

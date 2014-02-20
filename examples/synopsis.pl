@@ -26,12 +26,9 @@ my $grammar = Marpa::R2::Grammar->new( {
     ],
 });
 $grammar->precompute;
-my $recognizer = Marpa::R2::Recognizer->new( { grammar => $grammar } );
 
 use Regexp::Common qw /delimited/;
-
 my $lexer = MyLexer->new(
-    recognizer => $recognizer,
     tokens => {
         word          => { match => qr{\b\w+\b}, store => 'scalar' },
         'quoted'      => {
@@ -52,7 +49,7 @@ my $lexer = MyLexer->new(
     debug => 1,
 );
 
-$lexer->recognize(\*DATA);
+my $recognizer = $lexer->recognize( Marpa::R2::Recognizer->new( { grammar => $grammar } ), \*DATA );
 
 use Data::Dumper;
 print Dumper $recognizer->value;

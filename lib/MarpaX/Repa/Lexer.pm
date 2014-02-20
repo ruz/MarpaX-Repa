@@ -24,7 +24,6 @@ Returns a new lexer instance. Takes named arguments.
             word => qr{\b\w+\b},
         },
         store => 'array',
-        recognizer => $recognizer,
         debug => 1,
     );
 
@@ -98,10 +97,6 @@ Should return a reference or undef that will be passed to recognizer.
 
 =back
 
-=item recognizer
-
-L<Marpa::R2::Recognizer> object or its subclass.
-
 =item debug
 
 If true then lexer prints debug log to STDERR.
@@ -154,16 +149,16 @@ sub init {
 
 =head2 recognize
 
-Takes a file handle and parses it. Dies on critical errors, not when parser lost its way.
-Returns recognizer that was passed to L</new>.
+Takes a recognizer and file handle and parses it. Dies on critical errors, not when parser lost its way.
+Returns recognizer that was passed.
 
 =cut
 
 sub recognize {
     my $self = shift;
+    my $rec = shift;
     my $fh = shift;
 
-    my $rec = $self->{'recognizer'};
 
     my $buffer = $self->buffer;
     my $buffer_can_grow = $self->grow_buffer( $fh );
