@@ -1,0 +1,6 @@
+0.06 2013-01-12
+
+    * INCOMPATIBLE CHANGE: recognizer is now argument in
+      recognize method
+    * more documentation
+    * bump Marpa version, test fail with older
