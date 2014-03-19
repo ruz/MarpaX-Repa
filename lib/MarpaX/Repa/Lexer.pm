@@ -34,7 +34,7 @@ Possible arguments:
 =item tokens
 
 Hash with names of terminals as keys and one of the
-following as values:
+following as value:
 
 =over 4
 
@@ -58,18 +58,20 @@ supported.
 
 With hash you can define token specific options. At this moment
 'store' option only (see below). Use C<match> key to set what to
-match (string or regular expression).
+match (string or regular expression):
 
     'a token' => {
         match => "a string",
         store => 'hash',
     },
 
-=back
+Per token options are:
+
+=over 4
 
 =item store
 
-What to store (pass to Marpa's recognizer). The following variants
+What to store (pass as value to Marpa's recognizer). The following variants
 are supported:
 
 =over 4
