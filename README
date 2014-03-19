@@ -46,10 +46,7 @@ SYNOPSIS
                         return $_[1];
                     },
                 },
-                OP            => {
-                    match => qr{\s+OR\s+|\s+},
-                    store => sub { ${$_[1]} =~ /\S/? \'|' : \'&' }
-                },
+                OP            => { match => qr{\s+OR\s+|\s+}, store => sub { ${$_[1]} =~ /\S/? \'|' : \'&' } },
                 NOT           => { match => '!', store => sub {\'!'} },
                 'OPEN-PAREN'  => { match => '(', store => 'undef' },
                 'CLOSE-PAREN' => { match => ')', store => 'undef' },
