@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 package MarpaX::Repa;
-our $VERSION = '0.05';
+our $VERSION = '0.10';
 
 =head1 NAME
 
