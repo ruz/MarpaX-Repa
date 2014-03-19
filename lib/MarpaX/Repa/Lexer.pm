@@ -149,8 +149,8 @@ sub init {
 
 =head2 recognize
 
-Takes a recognizer and file handle and parses it. Dies on critical errors, not when parser lost its way.
-Returns recognizer that was passed.
+Takes a recognizer and a file handle. Parses input. Dies on critical errors, but
+not when parser lost its way. Returns recognizer that was passed.
 
 =cut
 

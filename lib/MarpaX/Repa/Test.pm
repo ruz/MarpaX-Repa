@@ -45,9 +45,9 @@ sub recognize {
         $io = $input;
     }
 
-    my @res = $self->simple_lexer( %args );
-    $res[0]->recognize( $io );
-    return @res;
+    my ($lex, $rec, $gram) = $self->simple_lexer( %args );
+    $lex->recognize( $rec, $io );
+    return ($lex, $rec, $gram);
 }
 
 1;
