@@ -2,5 +2,6 @@
 
     * INCOMPATIBLE CHANGE: recognizer is now argument in
       recognize method
+    * do_rule_list action
     * more documentation
     * bump Marpa version, test fail with older

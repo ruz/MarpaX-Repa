@@ -69,6 +69,13 @@ sub do_what_I_mean {
     return $ret;
 }
 
+sub do_rule_list {
+    shift;
+    my $grammar = $Marpa::R2::Context::grammar;
+    my ($lhs)   = $grammar->rule( $Marpa::R2::Context::rule );
+    return { rule => $lhs, value => [grep defined, @_] };
+}
+
 =head2 do_join_children
 
 Returns:
