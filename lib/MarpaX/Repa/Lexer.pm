@@ -99,6 +99,14 @@ Should return a reference or undef that will be passed to recognizer.
 
 =back
 
+=item check
+
+A callback that can check whether token is really match or not.
+
+=back
+
+=back
+
 =item debug
 
 If true then lexer prints debug log to STDERR.
@@ -131,7 +139,7 @@ sub init {
         my ($match, @rest);
         if ( ref( $tokens->{ $token } ) eq 'HASH' ) {
             $match = $tokens->{ $token }{'match'};
-            @rest = ($tokens->{ $token }{'store'});
+            @rest = (@{ $tokens->{ $token } }{'store','check'});
         } else {
             $match = $tokens->{ $token };
         }
@@ -180,7 +188,7 @@ sub recognize {
             REDO:
 
             my ($matched, $match, $length);
-            my ($type, $what, $how) = @{ $self->{'tokens'}{ $token } || [] };
+            my ($type, $what, $how, $check) = @{ $self->{'tokens'}{ $token } || [] };
 
             unless ( $type ) {
                 say STDERR "Unknown token: '$token'" if $self->{'debug'};
@@ -218,6 +226,12 @@ sub recognize {
             }
             say STDERR "Token '$token' matched ". $self->dump_buffer( $length )
                 if $self->{'debug'};
+
+            if ( $check && !$check->( $self, $token, $match, $length ) ) {
+                say STDERR "\tCheck failed for '$token', skipping"
+                    if $self->{'debug'};
+                next;
+            }
 
             if ( ref $how ) {
                 $match = $how->( $token, \"$match" );

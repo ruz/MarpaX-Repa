@@ -1,7 +1,8 @@
-0.06 2013-01-12
+0.10 2019-03-19
 
     * INCOMPATIBLE CHANGE: recognizer is now argument in
       recognize method
+    * check option for tokens
     * do_rule_list action
     * more documentation
     * bump Marpa version, test fail with older
