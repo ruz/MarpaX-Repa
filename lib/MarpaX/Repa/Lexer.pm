@@ -183,6 +183,8 @@ sub recognize {
         say STDERR "Buffer start: ". $self->dump_buffer .'...'
             if $self->{'debug'};
 
+        my $longest = 0;
+        my @alternatives;
         my $first_char = substr $$buffer, 0, 1;
         foreach my $token ( @$expected ) {
             REDO:
@@ -232,6 +234,22 @@ sub recognize {
                     if $self->{'debug'};
                 next;
             }
+
+            if ( $self->{longest_expected} ) {
+                if ( $length > $longest ) {
+                    say STDERR "New longest token of length $length" if $self->{'debug'};
+                    @alternatives = (); $longest = $length;
+                } elsif ( $length < $longest ) {
+                    say STDERR "Skipping $token token as it's short" if $self->{'debug'};
+                    next;
+                }
+            }
+            push @alternatives, [$token, $how, $match, $length];
+        }
+
+        foreach my $e ( @alternatives ) {
+            my ($token, $how, $match, $length) = @$e;
+            say STDERR "Accepting $token of length $length" if $self->{'debug'};
 
             if ( ref $how ) {
                 $match = $how->( $token, \"$match" );

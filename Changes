@@ -2,6 +2,7 @@
 
     * INCOMPATIBLE CHANGE: recognizer is now argument in
       recognize method
+    * longest_expected option for lexer - longest acceptable tokens matching
     * check option for tokens
     * do_rule_list action
     * more documentation
