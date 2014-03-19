@@ -21,7 +21,7 @@ no_index:
     - inc
     - t
 requires:
-  Marpa::R2: 0
+  Marpa::R2: 2.078
   perl: 5.10.0
 resources:
   license: http://dev.perl.org/licenses/
