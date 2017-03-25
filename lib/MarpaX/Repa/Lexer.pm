@@ -107,6 +107,10 @@ A callback that can check whether token is really match or not.
 
 =back
 
+=item complete
+
+If true then parse should complete in one go and consume whole input.
+
 =item debug
 
 If true then lexer prints debug log to STDERR.
@@ -127,7 +131,8 @@ sub new {
 
 =head2 init
 
-Setups instance and returns C<$self>. Called from constructor.
+Setups instance and returns C<$self>. No need to call, it's called
+from the constructor.
 
 =cut
 
@@ -273,6 +278,8 @@ sub recognize {
             # XXX: we are done, no way to advance further, we would love this
             # to be improved in Marpa
             if ( $rec->current_earleme == $rec->thin->furthest_earleme ) {
+                die "Failed to parse: parser reached furthest earleme, but buffer is not empty - '". $self->dump_buffer . "'"
+                    if $self->{complete} && (length $$buffer || $buffer_can_grow);
                 return $rec;
             }
 
@@ -281,12 +288,15 @@ sub recognize {
             if ( defined (my $events = eval { $rec->earleme_complete }) ) {
                 if ( $events && $rec->exhausted ) {
                     substr $$buffer, 0, $skip, '';
+                    die "Failed to parse: parser is exhausted, but buffer is not empty - '". $self->dump_buffer . "'"
+                        if $self->{complete} && (length $$buffer || $buffer_can_grow);
                     return $rec;
                 }
                 $expected = $rec->terminals_expected;
                 last if @$expected;
             } else {
                 say STDERR "Failed to parse: $@" if $self->{'debug'};
+                die "Failed to parse: $@" if $self->{complete};
                 return $rec;
             }
         }

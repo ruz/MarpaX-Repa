@@ -131,8 +131,8 @@ It's a working program that prints the following output:
     Failed to parse: Problem in ...
 
 First line says that at this moment parser expects 'something'.
-It's going to look for it in the following text (second line).
-Third line says that lexer doesn't know anything about 'something'.
+It's going to look for it in the buffer (second line).
+Third line says that lexer doesn't know anything about token 'something'.
 It's not a surprise that parsing fails.
 
 What can we do with 'something'? We either put it into grammar or

@@ -1,4 +1,8 @@
-0.10 2019-03-19
+0.11
+
+    * new option 'complete' in lexer
+
+0.10 2014-03-19
 
     * INCOMPATIBLE CHANGE: recognizer is now argument in
       recognize method
