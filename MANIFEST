@@ -1,3 +1,4 @@
+Changes
 examples/synopsis.pl
 examples/template.pl
 inc/Module/Install.pm
@@ -18,3 +19,4 @@ MANIFEST			This list of files
 META.yml
 README
 t/basics.t
+t/complete.t
